@@ -1,32 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS - Virtual Assistant</title>
-    <link rel="shortcut icon" href="avatar.png" type="image/x-icon">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-
+    <title>JARVIS Voice Assistant</title>
 </head>
-
 <body>
-    <section class="main">
-        <div class="image-container">
-            <div class="image">
-                <img src="giphy.gif" alt="image">
-            </div>
-            <h1>J A R V I S</h1>
-            <p>I m a Virtual Assistant JARVIS, How may i help you?</p>
-        </div>
-        <div class="input">
-            <button class="talk"><i class="fas fa-microphone-alt"></i></button>
-            <h1 class="content"> Click here to speak</h1>
-        </div>
-    </section>
-    <script src="app.js"></script>
-</body>
+    <h1>JARVIS Voice Assistant</h1>
+    <button class="talk">Speak</button>
+    <p class="content">I am listening...</p>
 
+    <script>
+        const btn = document.querySelector('.talk');
+        const content = document.querySelector('.content');
+
+        function speak(text) {
+            const text_speak = new SpeechSynthesisUtterance(text);
+            text_speak.rate = 1;
+            text_speak.volume = 1;
+            text_speak.pitch = 1;
+            window.speechSynthesis.speak(text_speak);
+        }
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            content.textContent = transcript;
+            sendToBackend(transcript);
+        };
+
+        btn.addEventListener('click', () => {
+            content.textContent = "Listening...";
+            recognition.start();
+        });
+
+        function sendToBackend(message) {
+            fetch('/process_command', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ command: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                speak(data.response);  // Speak out the response from Python
+                content.textContent = data.response;  // Display the response in the page
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
 </html>
